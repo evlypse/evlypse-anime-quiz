@@ -3,6 +3,12 @@ let dropArmed = false;
 let usedDrop = false;
 let usedHint = false;
 let stopTimer = null;
+let currentMode = "infinite";
+let animeFound = 0;
+let openingFound = 0;
+let wrongAnswers = [];
+
+/*____________________________ CONST ________________________________*/
 
 const predrop = document.getElementById("predrop");
 const drop = document.getElementById("drop");
@@ -10,6 +16,26 @@ const volumeSlider = document.getElementById("volumeSlider");
 const progressBar = document.getElementById("progressBar");
 const timeDisplay = document.getElementById("timeDisplay");
 const player = document.getElementById("player");
+
+const closeTrainingPopupBtn =
+    document.getElementById("closeTrainingPopupBtn");
+
+closeTrainingPopupBtn.addEventListener("click", () => {
+
+    popup.classList.add("hidden");
+
+});
+
+const trainingBtn =
+document.getElementById("trainingModeBtn");
+
+const infiniteBtn =
+document.getElementById("infiniteModeBtn");
+
+const popup =
+document.getElementById("trainingPopup");
+
+/*____________________________ FONCTIONS ________________________________*/
 
 let questions = [];
 
@@ -283,7 +309,8 @@ function validate() {
         ) <= tolerance;
     });
 
-    let openingOk = opening === q.opening;
+    let openingOk =
+        Number(opening) === Number(q.op_number);
     if(animeOk) animeFound++;
     if(openingOk) openingFound++;
 
@@ -325,7 +352,7 @@ function validate() {
         msg = "Bon anime, mauvais opening";
         titleColor = "#ffb300";
         wrongAnswers.push(
-            `${correctAnime} - Opening ${q.opening}`
+            `${correctAnime} - Opening ${q.op_number}`
         );
     }
     else if(openingOk){
@@ -333,14 +360,14 @@ function validate() {
         titleColor = "#ffb300";
 
         wrongAnswers.push(
-            `${correctAnime} - Opening ${q.opening}`
+            `${correctAnime} - Opening ${q.op_number}`
         );
     }
     else{
         msg = "tu pues smr";
         titleColor = "#f43e3e";
         wrongAnswers.push(
-            `${correctAnime} - Opening ${q.opening}`
+            `${correctAnime} - Opening ${q.op_number}`
         );
     }
 
@@ -351,7 +378,7 @@ function validate() {
 
         <p>
             <strong>Anime :</strong> ${correctAnime}<br>
-            <strong>Opening :</strong> ${q.opening}
+            <strong>Opening :</strong> ${q.op_number}
         </p>
 
         <h3>+${points} point${points > 1 ? "s" : ""}</h3>
@@ -360,15 +387,29 @@ function validate() {
     document.getElementById("next").style.display = "block";
 }
 
+
 function nextQuestion() {
-  index++;
 
-  if (index >= questions.length) {
-    endGame();
-    return;
-  }
+    index++;
 
-  loadQuestion();
+    // Fin du mode entraînement
+    if (currentMode === "training" &&
+        index >= questions.length) {
+
+        showEndScreen();
+        return;
+    }
+
+    // Mode infini
+    if (currentMode === "infinite" &&
+        index >= questions.length) {
+
+        index = 0;
+
+        // Plus tard on rechargera d'autres openings ici
+    }
+
+    loadQuestion();
 }
 
 function endGame() {
@@ -567,8 +608,16 @@ function animateScore(oldScore, newScore){
 
         current++;
 
+        let displayedScore = score;
+
+        if(currentMode === "training"){
+            displayedScore = Math.round(
+                score * 100 / (questions.length * 10)
+            );
+        }
+
         document.getElementById("score").textContent =
-            `Score : ${current} / 100`;
+            `Score : ${displayedScore} / 100`;
 
         if(current >= newScore){
             clearInterval(interval);
@@ -593,6 +642,157 @@ async function testSupabase() {
 
     console.log("Data :", data);
     console.log("Erreur :", error);
+}
+
+trainingBtn.addEventListener("click", () => {
+
+    popup.classList.remove("hidden");
+
+});
+
+const startTrainingBtn =
+    document.getElementById("startTrainingBtn");
+
+startTrainingBtn.addEventListener("click", () => {
+
+    popup.classList.add("hidden");
+
+    // Active le mode entraînement
+    currentMode = "training";
+
+    trainingBtn.classList.add("active");
+    infiniteBtn.classList.remove("active");
+
+    document.querySelector(".difficulty-panel").style.display = "";
+
+    // Nombre de questions choisies
+    trainingQuestionCount = parseInt(
+        document.getElementById("trainingQuestionCount").value
+    );
+
+    // Difficultés choisies
+    selectedDifficulties = [...document.querySelectorAll(
+        '#trainingPopup input[type="checkbox"]:checked'
+    )].map(cb => cb.value);
+
+    startTrainingGame();
+
+});
+
+infiniteBtn.addEventListener("click", () => {
+
+    currentMode = "infinite";
+
+    infiniteBtn.classList.add("active");
+    trainingBtn.classList.remove("active");
+
+    document.querySelector(".difficulty-panel").style.display = "";
+
+});
+
+async function startTrainingGame() {
+
+    const { data, error } = await db
+        .from("openings")
+        .select("*");
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    let filtered = data.filter(op => {
+
+        const openingDifficulties =
+            op.difficulties
+            .toLowerCase()
+            .split(",")
+            .map(d => d.trim());
+
+        return openingDifficulties.some(diff =>
+            selectedDifficulties.includes(diff)
+        );
+
+    });
+
+    filtered.sort(() => Math.random() - 0.5);
+
+    questions = filtered.slice(0, trainingQuestionCount);
+
+    currentQuestionIndex = 0;
+    score = 0;
+
+    console.log("Questions sélectionnées :", questions);
+
+    loadQuestion();
+}
+
+function showEndScreen() {
+
+    document.querySelector(".card").style.display = "none";
+
+    const endDiv = document.getElementById("end");
+
+    endDiv.style.display = "block";
+
+    let finalDisplayedScore = score;
+
+    if(currentMode === "training"){
+        finalDisplayedScore = Math.round(
+            score * 100 / (questions.length * 10)
+        );
+    }
+
+    endDiv.innerHTML = `
+        <h2>Partie terminée !</h2>
+
+        <p>Score final : ${finalDisplayedScore} / 100</p>
+
+        <button onclick="replayTraining()">
+            Rejouer
+        </button>
+
+        <button onclick="backToInfinite()">
+            Retour au mode illimité
+        </button>
+    `;
+}
+
+function replayTraining() {
+
+    document.getElementById("end").style.display = "none";
+
+    document.querySelector(".card").style.display = "block";
+
+    popup.classList.remove("hidden");
+}
+
+function backToInfinite() {
+
+    document.getElementById("end").style.display = "none";
+    document.querySelector(".card").style.display = "block";
+
+    currentMode = "infinite";
+
+    infiniteBtn.classList.add("active");
+    trainingBtn.classList.remove("active");
+
+    document.querySelector(".difficulty-panel").style.display = "";
+
+    // Réinitialisation de l'interface
+    document.getElementById("anime").value = "";
+    document.getElementById("opening").value = "";
+
+    document.getElementById("result").innerHTML = "";
+
+    document.getElementById("next").style.display = "none";
+
+    document.getElementById("validateBtn").disabled = false;
+
+    index = 0;
+
+    // Relance une nouvelle partie infinie
+    startInfiniteGame();
 }
 
 loadQuestions();

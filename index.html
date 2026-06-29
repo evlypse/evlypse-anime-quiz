@@ -10,7 +10,7 @@
   <!-- RÈGLES -->
   <div id="rulesPanel">
 
-      <div class="panelButton">📖</div>
+    <div class="panelButton">📖</div>
 
       <div class="panelContent">
 
@@ -38,7 +38,7 @@
           <p>Anime +2 | Opening +0,5</p>
 
       </div>
-
+    </div>
   </div>
 
   <!-- AIDE -->
@@ -82,6 +82,7 @@
 
           <p>HTML / CSS / JS Vanilla</p>
           <p>Créé avec VSCode</p>
+          <p>Mis en ligne avec GitHub, Supabase</p>
           <p>De l'IA a été utilisée pour la création de ce site.</p>
 
           <hr>
@@ -107,16 +108,19 @@
             Outil de création des blindtests. Cliquez sur le bouton pour y accéder.
         </p>
 
-        <hr>
-
-        <h3>Comment faire ?</h3>
-
-        <p>Téléchargez puis insérez les musiques dans le dossier <b>"music"</b> et renommez-les simplement.</p>
-        <p>Remplissez toutes les cases.</p>
-        <p>Exportez le fichier .json puis <b>remplacez-le par celui déjà présent.</b></p>
-        <p>Envoyez le dossier entier à votre ami et laissez le galérer !</p>
-
     </div>
+
+  </div>
+
+  <div class="game-modes">
+
+    <button id="trainingModeBtn" class="mode-btn">
+        🎯
+    </button>
+
+    <button id="infiniteModeBtn" class="mode-btn active">
+        ♾️
+    </button>
 
   </div>
 
@@ -133,6 +137,23 @@
     </div>
 
     <div class="card">
+
+      <div class="difficulty-panel">
+          <label>
+              <input type="checkbox" value="facile" checked>
+              Facile
+          </label>
+
+          <label>
+              <input type="checkbox" value="moyen" checked>
+              Moyen
+          </label>
+
+          <label>
+              <input type="checkbox" value="difficile" checked>
+              Difficile
+          </label>
+      </div>
 
       <audio id="predrop"></audio>
       <audio id="drop"></audio>
@@ -192,8 +213,54 @@
 
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="supabase.js"></script>
-  <script src="script.js"></script>
+
+
+  <div id="trainingPopup" class="popup hidden">
+
+    <div class="popup-content">
+
+        <h2>Mode entraînement</h2>
+
+          <label>
+              <input type="checkbox" value="facile" checked>
+              Facile
+          </label>
+
+          <label>
+              <input type="checkbox" value="moyen" checked>
+              Moyen
+          </label>
+
+          <label>
+              <input type="checkbox" value="difficile" checked>
+              Difficile
+          </label>
+
+          <h3>Nombre de questions</h3>
+
+          <select id="trainingQuestionCount">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+          </select>
+
+          <br><br>
+
+          <button id="startTrainingBtn">
+              Commencer
+          </button>
+
+          <br><br>
+
+          <button id="closeTrainingPopupBtn">
+              Retour
+          </button>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="supabase.js"></script>
+<script src="script.js"></script>
+
 </body>
 </html>

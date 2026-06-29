@@ -24,6 +24,7 @@ h1 {
 }
 
 .card {
+  position: relative;
   background: white;
   padding: 20px;
   border-radius: 10px;
@@ -268,6 +269,7 @@ input {
     margin:10px 0;
 }
 
+
 #player{
     text-align:center;
 }
@@ -339,7 +341,133 @@ input {
     font-weight:bold;
     color:#555;
     text-align:center;
-
     margin:0;
     display:none;
+}
+
+/* _________________________ GAMEMODES ____________________________*/
+
+.game-modes {
+    position: absolute;
+
+    left: calc(50% - 336px);
+    top: 145px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    z-index: 100;
+}
+
+.mode-btn {
+
+    width: 36px;
+    height: 36px;
+
+    border: 1px solid #cfcfcf;
+    border-radius: 6px;
+
+    background: white;
+
+    cursor: pointer;
+
+    box-shadow: 0 0 8px rgba(0,0,0,.2);
+
+    font-size: 16px;
+}
+
+.mode-btn.active {
+    background: #d7d7d7;
+    color: white;
+}
+
+.difficulty-panel {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 100px;
+    text-align: left;
+    z-index: 5;
+}
+
+.difficulty-panel h3 {
+
+    margin: 0 0 10px 0;
+
+    font-size: 14px;
+}
+
+.difficulty-panel label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    margin-left: 5px;
+    margin-top: 2px;
+    font-size: 15px;
+}
+
+.difficulty-panel input {
+    width: auto;
+    margin: 0;
+}
+
+.popup {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-content {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    min-width: 350px;
+}
+
+.hidden {
+    display: none;
+}
+
+.difficulty-filters {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+
+    font-size: 24px;
+}
+
+.difficulty-filters label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.difficulty-filters input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+
+    accent-color: black;
+}
+
+input[type="checkbox"] {
+    accent-color: black;
+}
+
+#startTrainingBtn {
+    margin-top: 5px;
+}
+
+#closeTrainingPopupBtn {
+    margin-top: 0px;
 }
