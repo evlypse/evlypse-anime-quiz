@@ -2,30 +2,40 @@ let dropUnlocked = false;
 let dropArmed = false;
 let usedDrop = false;
 let usedHint = false;
+let stopTimer = null;
 
 const predrop = document.getElementById("predrop");
 const drop = document.getElementById("drop");
 const volumeSlider = document.getElementById("volumeSlider");
+const progressBar = document.getElementById("progressBar");
+const timeDisplay = document.getElementById("timeDisplay");
+const player = document.getElementById("player");
 
 let questions = [];
 
 async function loadQuestions() {
-    try {
-        const response = await fetch("questions.json");
-        questions = await response.json();
-        if (questions.length === 0) {
-            alert("Aucune question dans questions.json !");
-            return;
-        }
-        loadQuestion();
-    }
-    catch (error) {
-        alert(
-            "Impossible de charger questions.json.\n\n" +
-            "Pour jouer en local, lance le site avec Live Server."
-        );
+
+    const { data, error } = await db
+        .from("openings")
+        .select("*");
+
+    console.log("Questions récupérées :", data);
+    console.log("Erreur :", error);
+
+    if (error) {
         console.error(error);
+        alert("Erreur Supabase");
+        return;
     }
+
+    questions = data;
+
+    if (questions.length === 0) {
+        alert("Aucune question trouvée dans la base !");
+        return;
+    }
+
+    loadQuestion();
 }
 
 let currentAudio = predrop;
@@ -44,42 +54,42 @@ function unlockAndPlayDrop() {
 }
 
 function loadQuestion() {
-  let q = questions[index];
+    let q = questions[index];
 
-  dropUnlocked = false;
-  dropArmed = false;
-  usedDrop = false;
+    dropUnlocked = false;
+    dropArmed = false;
+    usedDrop = false;
 
-  document.getElementById("dropBtn").innerText = "🔒 Drop";
-  document.getElementById("dropBtn").classList.remove("unlocked");
+    document.getElementById("dropBtn").innerText = "🔒 Drop";
+    document.getElementById("dropBtn").classList.remove("unlocked");
 
-  document.getElementById("dropBtn").innerText = "🔒";
+    document.getElementById("dropBtn").innerText = "🔒";
 
-  predrop.src = q.audio;
-  drop.src = q.audio;
+    predrop.src = questions[index].audio_url;
+    drop.src = questions[index].audio_url;
 
-  document.getElementById("anime").value = "";
-  document.getElementById("opening").value = "";
-  document.getElementById("result").innerHTML = "";
-  document.getElementById("next").style.display = "none";
+    document.getElementById("anime").value = "";
+    document.getElementById("opening").value = "";
+    document.getElementById("result").innerHTML = "";
+    document.getElementById("next").style.display = "none";
 
-  document.getElementById("progress").innerText =
-    `Question ${index + 1} / ${questions.length}`;
+    document.getElementById("progress").innerText =
+        `Question ${index + 1} / ${questions.length}`;
 
-  document.getElementById("score").innerText =
-    `Score : ${score} / 100`;
+    document.getElementById("score").innerText =
+        `Score : ${score} / 100`;
 
-  document.getElementById("validateBtn").disabled = false;
+    document.getElementById("validateBtn").disabled = false;
 
-  usedHint = false;
+    usedHint = false;
 
-  const hintDisplay = document.getElementById("hintDisplay");
-  hintDisplay.innerHTML = "";
-  hintDisplay.style.display = "none";
+    const hintDisplay = document.getElementById("hintDisplay");
+    hintDisplay.innerHTML = "";
+    hintDisplay.style.display = "none";
 
-  document.getElementById("hintBtn").disabled = true;
+    document.getElementById("hintBtn").disabled = true;
 
-  updateGlobalProgress();
+    updateGlobalProgress();
 }
 
 
@@ -92,21 +102,45 @@ function playPredrop() {
 
     if (currentAudio === predrop && !predrop.paused) {
         predrop.pause();
+
+        if (stopTimer) {
+            clearTimeout(stopTimer);
+            stopTimer = null;
+        }
         document.querySelector(".buttons button").textContent =
             "▶ Reprendre";
+
         return;
     }
 
     currentAudio.pause();
     currentAudio = predrop;
-    predrop.currentTime =
-      questions[index].predropStart;
+
+    if (
+        predrop.currentTime < questions[index].predrop_start ||
+        predrop.currentTime >= questions[index].predrop_end
+    ) {
+        predrop.currentTime = questions[index].predrop_start;
+    }
+
     predrop.play();
+
+    if (stopTimer) clearTimeout(stopTimer);
+    const remainingTime =
+        Math.max(
+            0,
+            questions[index].predrop_end - predrop.currentTime
+        ) * 1000;
+
+    stopTimer = setTimeout(() => {
+        predrop.pause();
+        resetPlayer();
+    }, remainingTime);
 
     predrop.ontimeupdate = () => {
     if(
         predrop.currentTime >=
-        questions[index].predropEnd
+        questions[index].predrop_end
     ){
         predrop.pause();
         predrop.ontimeupdate = null;
@@ -131,9 +165,12 @@ function handleDrop() {
     }
 
     if (currentAudio === drop && !drop.paused) {
-
         drop.pause();
 
+        if (stopTimer) {
+            clearTimeout(stopTimer);
+            stopTimer = null;
+        }
         document.getElementById("dropBtn").innerText =
             "▶ Reprendre";
 
@@ -154,14 +191,31 @@ function handleDrop() {
     document.getElementById("dropBtn").innerText =
         "⏸ Pause";
 
-    drop.currentTime =
-      questions[index].dropStart;
+    if (
+        drop.currentTime < questions[index].drop_start ||
+        drop.currentTime >= questions[index].drop_end
+    ) {
+        drop.currentTime = questions[index].drop_start;
+    }
+
     drop.play();
+
+    if (stopTimer) clearTimeout(stopTimer);
+        const remainingTime =
+        Math.max(
+            0,
+            questions[index].drop_end - drop.currentTime
+        ) * 1000;
+
+    stopTimer = setTimeout(() => {
+        drop.pause();
+        resetPlayer();
+    }, remainingTime);
 
     drop.ontimeupdate = () => {
     if(
         drop.currentTime >=
-        questions[index].dropEnd
+        questions[index].drop_end
     ){
         drop.pause();
         drop.ontimeupdate = null;
@@ -208,16 +262,25 @@ function validate() {
     document.getElementById("validateBtn").disabled = true;
 
     let q = questions[index];
-    let correctAnime = q.anime[0];
+    let correctAnime = q.anime;
 
     let anime = normalize(document.getElementById("anime").value);
     let opening = document.getElementById("opening").value.trim();
 
-    let animeOk = q.anime.some(a => {
+    const aliases = q.aka
+    ? q.aka.split(",").map(a => a.trim())
+    : [];
+
+    aliases.unshift(q.anime);
+
+    let animeOk = aliases.some(a => {
         const normalizedAnswer = normalize(a);
-        const tolerance =
-            normalizedAnswer.length > 15 ? 2 : 1;
-        return levenshtein(normalizedAnswer, anime) <= tolerance;
+        const tolerance = normalizedAnswer.length > 15 ? 2 : 1;
+
+        return levenshtein(
+            normalizedAnswer,
+            anime
+        ) <= tolerance;
     });
 
     let openingOk = opening === q.opening;
@@ -366,43 +429,57 @@ function endGame() {
 
 predrop.volume = 0.5;
 drop.volume = 0.5;
+volumeSlider.addEventListener("input", () => {
+
+    predrop.volume = volumeSlider.value;
+    drop.volume = volumeSlider.value;
+
+});
 
 setInterval(() => {
 
-    if(currentAudio.duration){
+    if (!currentAudio || currentAudio.paused)
+        return;
 
-        let start = 0;
-        let end = currentAudio.duration;
+    let start = 0;
+    let end = 0;
 
-        if(currentAudio === predrop){
-            start = questions[index].predropStart;
-            end = questions[index].predropEnd;
-        }
+    if (currentAudio === predrop) {
 
-        else if(currentAudio === drop){
-            start = questions[index].dropStart;
-            end = questions[index].dropEnd;
-        }
-
-        const current =
-            currentAudio.currentTime - start;
-        const total =
-            end - start;
-
-        progressBar.value =
-            (current / total) * 100;
-
-        timeDisplay.textContent =
-            format(Math.floor(current))
-            + " / "
-            + format(Math.floor(total));
+        start = questions[index].predrop_start;
+        end = questions[index].predrop_end;
     }
-},100);
+
+    else if (currentAudio === drop) {
+
+        start = questions[index].drop_start;
+        end = questions[index].drop_end;
+    }
+
+    const total = end - start;
+    const current = Math.min(
+        total,
+        Math.max(0, currentAudio.currentTime - start)
+    );
+
+    progressBar.value = (current / total) * 100;
+
+    timeDisplay.textContent =
+        format(Math.floor(current))
+        + " / "
+        + format(Math.floor(total));
+
+}, 100);
 
 predrop.onended = resetPlayer;
 drop.onended = resetPlayer;
 
 function resetPlayer(){
+
+    if (stopTimer) {
+        clearTimeout(stopTimer);
+        stopTimer = null;
+    }
 
     document.querySelector(".buttons button").textContent =
         "▶ Predrop";
@@ -410,7 +487,9 @@ function resetPlayer(){
         dropUnlocked ? "▶ Drop" : "🔒";
     
     progressBar.value = 0;
-    player.style.display = "none";
+
+    timeDisplay.textContent =
+    "0:00 / 0:10";
 }
 
 function format(sec){
@@ -424,12 +503,23 @@ function format(sec){
 
 progressBar.addEventListener("input", () => {
 
-    if(currentAudio.duration){
+    let start = 0;
+    let end = 0;
 
-        currentAudio.currentTime =
-            (progressBar.value / 100) * currentAudio.duration;
+    if (currentAudio === predrop) {
+        start = questions[index].predrop_start;
+        end = questions[index].predrop_end;
     }
 
+    else if (currentAudio === drop) {
+        start = questions[index].drop_start;
+        end = questions[index].drop_end;
+    }
+
+    const total = end - start;
+
+    currentAudio.currentTime =
+        start + (progressBar.value / 100) * total;
 });
 
 function generateHint(title){
@@ -494,6 +584,15 @@ function updateGlobalProgress(){
 
     document.getElementById("globalProgressBar")
         .style.width = percent + "%";
+}
+
+async function testSupabase() {
+    const { data, error } = await db
+        .from('openings')
+        .select('*');
+
+    console.log("Data :", data);
+    console.log("Erreur :", error);
 }
 
 loadQuestions();

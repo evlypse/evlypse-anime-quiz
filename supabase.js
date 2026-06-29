@@ -1,7 +1,7 @@
-const SUPABASE_URL = "COLLE_ICI_TON_URL_SUPABASE";
-const SUPABASE_KEY = "COLLE_ICI_TA_CLE_PUBLISHABLE";
+const SUPABASE_URL = "https://jtgqdhsqeegwkivlaxsm.supabase.co";
+const SUPABASE_KEY = "sb_publishable_v7xZ-eR7pKYhAh70PQFP9A_3sq8bjAx";
 
-const supabase = window.supabase.createClient(
+const db = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
