@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Créateur de Blindtest</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial, sans-serif;
+    background:#f2f4f8;
+    margin:0;
+    padding:20px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    background:white;
+    padding:25px;
+    border-radius:18px;
+    box-shadow:0 5px 20px rgba(0,0,0,0.08);
+}
+
+h1{
+    text-align:center;
+    margin-top:0;
+    margin-bottom:20px;
+    color:#222;
+}
+
+.section{
+    background:#fafafa;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:15px;
+    border:1px solid #e5e5e5;
+}
+
+label{
+    display:block;
+    font-size:14px;
+    font-weight:bold;
+    margin-bottom:4px;
+    color:#444;
+}
+
+input,
+select{
+    width:100%;
+    padding:8px 10px;
+    margin-bottom:10px;
+    border:1px solid #d0d0d0;
+    border-radius:8px;
+    font-size:14px;
+}
+
+input:focus,
+select:focus{
+    outline:none;
+    border-color:#555;
+}
+
+audio{
+    width:100%;
+    margin:10px 0;
+}
+
+.timeButtons{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:10px;
+}
+
+button{
+    padding:9px;
+    border:none;
+    border-radius:8px;
+    background:#222;
+    color:white;
+    cursor:pointer;
+    font-size:14px;
+    transition:0.2s;
+}
+
+button:hover{
+    background:#444;
+}
+
+button:disabled{
+    background:#999;
+    cursor:not-allowed;
+}
+
+.timesGrid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:10px;
+}
+
+.timeBox{
+    background:white;
+    border:1px solid #ddd;
+    border-radius:8px;
+    padding:8px;
+    text-align:center;
+    font-size:13px;
+}
+
+#list{
+    margin-top:15px;
+}
+
+.question{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 12px;
+    margin-bottom:8px;
+    border-radius:8px;
+    background:white;
+    border:1px solid #ddd;
+}
+
+.question button{
+    width:auto;
+    padding:6px 12px;
+    background:#c73c3c;
+}
+
+.question button:hover{
+    background:#a92e2e;
+}
+
+#count{
+    font-weight:bold;
+    color:#222;
+}
+
+.exportBtn{
+    margin-top:15px;
+    background:#1f7a3d;
+}
+
+.exportBtn:hover{
+    background:#17602f;
+}
+
+.timesInputs{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Créateur de Blindtest</h1>
+
+<div class="section">
+
+<label>Question n°</label>
+
+<select id="questionNumber">
+    <option value="">Choisir une question</option>
+    <option value="0">Question 1</option>
+    <option value="1">Question 2</option>
+    <option value="2">Question 3</option>
+    <option value="3">Question 4</option>
+    <option value="4">Question 5</option>
+    <option value="5">Question 6</option>
+    <option value="6">Question 7</option>
+    <option value="7">Question 8</option>
+    <option value="8">Question 9</option>
+    <option value="9">Question 10</option>
+</select>
+
+<input id="anime" placeholder="Nom principal">
+
+<input id="aliases"
+placeholder="Nom(s) alternatif(s) - séparés par des virgules">
+
+<input id="opening"
+placeholder="Numéro d'opening">
+
+<input id="fileName"
+placeholder="Nom du mp3 (ex: fireforce.mp3)">
+
+<input type="file" id="audioFile" accept=".mp3">
+
+<audio controls id="audio"></audio>
+
+</div>
+
+<div class="timesInputs">
+
+    <div>
+        <label>Début prédrop (s)</label>
+        <input type="number"
+               id="predropStartInput"
+               step="0.1"
+               value="0">
+    </div>
+
+    <div>
+        <label>Fin prédrop (s)</label>
+        <input type="number"
+               id="predropEndInput"
+               step="0.1"
+               value="0">
+    </div>
+
+    <div>
+        <label>Début drop (s)</label>
+        <input type="number"
+               id="dropStartInput"
+               step="0.1"
+               value="0">
+    </div>
+
+    <div>
+        <label>Fin drop (s)</label>
+        <input type="number"
+               id="dropEndInput"
+               step="0.1"
+               value="0">
+    </div>
+
+</div>
+
+<div class="section">
+
+    <div class="timeButtons">
+
+        <button onclick="setTime('predropStart')">
+            Début prédrop
+        </button>
+
+        <button onclick="setTime('predropEnd')">
+            Fin prédrop
+        </button>
+
+        <button onclick="setTime('dropStart')">
+            Début drop
+        </button>
+
+        <button onclick="setTime('dropEnd')">
+            Fin drop
+        </button>
+
+    </div>
+
+</div>
+
+<button onclick="addQuestion()">
+Ajouter la question
+</button>
+
+<h2>Questions : <span id="count">0</span>/10</h2>
+
+<div id="list"></div>
+
+<button class="exportBtn" onclick="exportJSON()" disabled>
+Exporter questions.json
+</button>
+
+<script>
+
+const audio=document.getElementById("audio");
+
+document.getElementById("audioFile")
+.addEventListener("change",e=>{
+
+    audio.src=
+    URL.createObjectURL(e.target.files[0]);
+
+});
+
+let times={
+    predropStart:0,
+    predropEnd:0,
+    dropStart:0,
+    dropEnd:0
+};
+
+let questions = new Array(10).fill(null);
+
+function setTime(name){
+
+    const value = Number(audio.currentTime.toFixed(1));
+    document.getElementById(name + "Input").value = value;
+}
+
+function addQuestion(){
+
+    const slot =
+        document.getElementById("questionNumber").value;
+
+    if(slot === ""){
+        alert("Choisis un numéro de question.");
+        return;
+    }
+
+    const q = {
+
+        anime:[
+            document.getElementById("anime").value,
+            ...document.getElementById("aliases")
+            .value
+            .split(",")
+            .map(x => x.trim())
+            .filter(x => x !== "")
+        ],
+
+        opening:
+            document.getElementById("opening").value,
+
+        audio:
+            "music/" +
+            document.getElementById("fileName").value,
+
+        predropStart: Number(
+            document.getElementById("predropStartInput").value
+        ),
+        predropEnd: Number(
+            document.getElementById("predropEndInput").value
+        ),
+        dropStart: Number(
+            document.getElementById("dropStartInput").value
+        ),
+        dropEnd: Number(
+            document.getElementById("dropEndInput").value
+        )
+    };
+
+    questions[slot] = q;
+
+    refreshList();
+    clearForm();
+}
+
+function refreshList(){
+
+    const nbQuestions =
+        questions.filter(q => q !== null).length;
+
+    document.getElementById("count")
+        .textContent = nbQuestions;
+
+    const div =
+        document.getElementById("list");
+
+    div.innerHTML = "";
+
+    questions.forEach((q, i) => {
+
+        if(q === null){
+
+            div.innerHTML += `
+            <div class="question">
+                ${i + 1}. (vide)
+            </div>`;
+
+            return;
+        }
+
+        div.innerHTML += `
+        <div class="question">
+
+            ${i + 1}. ${q.anime[0]} OP${q.opening}
+
+            <button onclick="removeQuestion(${i})">
+                Supprimer
+            </button>
+
+        </div>`;
+    });
+
+    document.querySelector(
+        'button[onclick="exportJSON()"]'
+    ).disabled = nbQuestions !== 10;
+}
+
+function removeQuestion(i){
+
+    questions[i] = null;
+
+    document.querySelector(
+        `#questionNumber option[value="${i}"]`
+    ).disabled = false;
+
+    refreshList();
+}
+
+function exportJSON(){
+
+    if(questions.includes(null)){
+
+        alert(
+            "Il faut remplir les 10 questions."
+        );
+
+        return;
+    }
+
+    const blob = new Blob(
+        [JSON.stringify(questions, null, 2)],
+        {type:"application/json"}
+    );
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "questions.json";
+    a.click();
+}
+
+function clearForm(){
+
+    document.getElementById("anime").value = "";
+    document.getElementById("aliases").value = "";
+    document.getElementById("opening").value = "";
+    document.getElementById("fileName").value = "";
+
+    document.getElementById("audioFile").value = "";
+    document.getElementById("audio").src = "";
+
+    document.getElementById("predropStartInput").value = 0;
+    document.getElementById("predropEndInput").value = 0;
+    document.getElementById("dropStartInput").value = 0;
+    document.getElementById("dropEndInput").value = 0;
+
+    document.getElementById("questionNumber").value = "";
+}
+
+document.getElementById("questionNumber")
+.addEventListener("change", loadQuestionData);
+
+function loadQuestionData(){
+
+    const slot =
+        document.getElementById("questionNumber").value;
+
+    if(slot === ""){
+
+        clearForm();
+        return;
+    }
+
+    document.getElementById("questionNumber").value = slot;
+
+    const q = questions[slot];
+
+    if(q === null){
+
+        document.getElementById("anime").value = "";
+        document.getElementById("aliases").value = "";
+        document.getElementById("opening").value = "";
+        document.getElementById("fileName").value = "";
+
+        document.getElementById("predropStartInput").value = 0;
+        document.getElementById("predropEndInput").value = 0;
+        document.getElementById("dropStartInput").value = 0;
+        document.getElementById("dropEndInput").value = 0;
+
+        document.getElementById("audio").src = "";
+
+        return;
+    }
+
+    document.getElementById("anime").value =
+        q.anime[0];
+
+    document.getElementById("aliases").value =
+        q.anime.slice(1).join(", ");
+
+    document.getElementById("opening").value =
+        q.opening;
+
+    document.getElementById("fileName").value =
+        q.audio.replace("music/", "");
+
+    document.getElementById("predropStartInput").value =
+        q.predropStart;
+
+    document.getElementById("predropEndInput").value =
+        q.predropEnd;
+
+    document.getElementById("dropStartInput").value =
+        q.dropStart;
+
+    document.getElementById("dropEndInput").value =
+        q.dropEnd;
+}
+
+</script>
+
+</div>
+</body>
+</html>

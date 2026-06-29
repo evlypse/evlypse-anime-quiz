@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>AMQ version homemade</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  
+  <!-- RÈGLES -->
+  <div id="rulesPanel">
+
+      <div class="panelButton">📖</div>
+
+      <div class="panelContent">
+
+          <h3>Règles</h3>
+
+          <p>• 10 openings d'anime</p>
+          <p>• Difficulté croissante</p>
+          <p>• <b>Drop</b> déblocable, mais remporte moins de points (🔒)</p>
+          <p>• <b>Première et dernière lettre</b> du titre déblocables après avoir débloqué le drop, mais remporte encore moins de points (🔒)</p>
+          <p>• Vous devez deviner le <b>nom</b> et le <b>numéro</b> de l'opening !</p>
+
+          <hr>
+
+          <b>Sans Drop</b>
+          <p>Anime +8 | Opening +2</p>
+
+          <br>
+
+          <b>Avec Drop</b>
+          <p>Anime +4,5 | Opening +1,5</p>
+
+          <br>
+
+          <b>Avec Titre</b>
+          <p>Anime +2 | Opening +0,5</p>
+
+      </div>
+
+  </div>
+
+  <!-- AIDE -->
+  <div id="helpPanel">
+
+    <div class="panelButton">💡</div>
+
+    <div class="panelContent">
+
+        <h3>Aide</h3>
+
+          <p><b>La majorité des écritures</b> d'un même animé sont prises en compte.</p>
+          <p>Vous pouvez mettre les initiales de l'anime si celui-ci est composé de <b>3 mots ou plus</b>.</p>
+          <p><b>Ex :</b> MHA, My Hero Academia, Boku no Hero Academia</p>
+
+          <hr>
+
+          <p>Ne mettez pas d'espace entre les symboles tels que "!", "?" qui suivent les lettres.</p>
+
+          <hr>
+
+          <p>Une marge d'erreur d'<b>1 lettre</b> a été incluse pour faciliter les réponses, et <b>2 lettres</b> pour les noms d'anime longs (15 lettres ou plus).</p>
+
+    </div>
+
+  </div>
+
+  <!-- CRÉDITS -->
+  <div id="creditsPanel">
+
+      <div class="panelButton">ℹ</div>
+
+      <div class="panelContent">
+
+          <h3>Crédits</h3>
+
+          <p>Site créé par le goat <b>evlypse</b></p>
+          <p>Inspiré de AMQ, Anidle</p>
+
+          <hr>
+
+          <p>HTML / CSS / JS Vanilla</p>
+          <p>Créé avec VSCode</p>
+          <p>De l'IA a été utilisée pour la création de ce site.</p>
+
+          <hr>
+
+          <p>Bonne chance !</p>
+
+      </div>
+
+  </div>
+
+
+  <div id="adminPanel">
+
+    <a href="admin.html" class="panelButton">
+        ⚙️
+    </a>
+
+    <div class="panelContent">
+
+        <h3>Création de quiz</h3>
+
+        <p>
+            Outil de création des blindtests. Cliquez sur le bouton pour y accéder.
+        </p>
+
+        <hr>
+
+        <h3>Comment faire ?</h3>
+
+        <p>Téléchargez puis insérez les musiques dans le dossier <b>"music"</b> et renommez-les simplement.</p>
+        <p>Remplissez toutes les cases.</p>
+        <p>Exportez le fichier .json puis <b>remplacez-le par celui déjà présent.</b></p>
+        <p>Envoyez le dossier entier à votre ami et laissez le galérer !</p>
+
+    </div>
+
+  </div>
+
+  <div class="container">
+
+    <h1>AMQ version homemade</h1>
+
+    <div class="top-bar">
+      <div id="progress">Question 1 / 10</div>
+      <div id="globalProgressContainer">
+        <div id="globalProgressBar"></div>
+      </div>
+      <div id="score">Score : 0 / 100</div>
+    </div>
+
+    <div class="card">
+
+      <audio id="predrop"></audio>
+      <audio id="drop"></audio>
+
+      <div class="buttons">
+        <button onclick="playPredrop()">▶ Predrop</button>
+        <button id="dropBtn" onclick="handleDrop()">🔒</button>
+        <button id="hintBtn" onclick="showHint()">🔒</button>
+      </div>
+
+      <div class="audioControls">
+
+      <div id="player" style="display:none;">
+
+          <input
+              type="range"
+              id="progressBar"
+              value="0"
+              min="0"
+              max="100">
+
+          <div id="timeDisplay">
+              0:00 / 0:00
+          </div>
+
+      </div>
+
+      <div class="volumeContainer">
+          🔊
+          <input
+              type="range"
+              id="volumeSlider"
+              min="0"
+              max="100"
+              value="50">
+      </div>
+
+      <div id="hintDisplay"></div>
+
+      </div>
+
+      <input type="text" id="anime" placeholder="Nom de l'anime">
+      <input type="text" id="opening" placeholder="Numéro d'opening">
+
+      <button id="validateBtn" class="validate" onclick="validate()">Valider</button>
+
+      <div id="result"></div>
+
+      <button id="next" onclick="nextQuestion()" style="display:none;">
+        Question suivante →
+      </button>
+
+    </div>
+
+    <div id="end" class="end" style="display:none;"></div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
